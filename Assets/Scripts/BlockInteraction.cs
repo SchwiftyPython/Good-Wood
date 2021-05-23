@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using Assets.Scripts.Blocks;
+using Assets.Scripts.World.Blocks;
 using UnityEngine;
 
 namespace Assets.Scripts
@@ -40,7 +42,7 @@ namespace Assets.Scripts
                 if (Physics.Raycast(cam.transform.position, cam.transform.forward, out hit, 10))
                 {
                     Chunk hitc;
-                    if(!World.chunks.TryGetValue(hit.collider.gameObject.name, out hitc)) return;
+                    if(!World.World.chunks.TryGetValue(hit.collider.gameObject.name, out hitc)) return;
 
                     Vector3 hitBlock;
                     if(Input.GetMouseButtonDown(0))
@@ -55,7 +57,7 @@ namespace Assets.Scripts
                     //int y = (int) (Mathf.Round(hitBlock.y) - hit.collider.gameObject.transform.position.y);
                     //int z = (int) (Mathf.Round(hitBlock.z) - hit.collider.gameObject.transform.position.z);
 				
-                    Block b = World.GetWorldBlock(hitBlock);
+                    Block b = World.World.GetWorldBlock(hitBlock);
                     //Debug.Log(b.position);
                     hitc = b.owner;
 
@@ -80,22 +82,22 @@ namespace Assets.Scripts
 
                         //update neighbours?
                         if(b.position.x == 0) 
-                            updates.Add(World.BuildChunkName(new Vector3(thisChunkx-World.chunkSize,thisChunky,thisChunkz)));
-                        if(b.position.x == World.chunkSize - 1) 
-                            updates.Add(World.BuildChunkName(new Vector3(thisChunkx+World.chunkSize,thisChunky,thisChunkz)));
+                            updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx- World.World.chunkSize,thisChunky,thisChunkz)));
+                        if(b.position.x == World.World.chunkSize - 1) 
+                            updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx+ World.World.chunkSize,thisChunky,thisChunkz)));
                         if(b.position.y == 0) 
-                            updates.Add(World.BuildChunkName(new Vector3(thisChunkx,thisChunky-World.chunkSize,thisChunkz)));
-                        if(b.position.y == World.chunkSize - 1) 
-                            updates.Add(World.BuildChunkName(new Vector3(thisChunkx,thisChunky+World.chunkSize,thisChunkz)));
+                            updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx,thisChunky- World.World.chunkSize,thisChunkz)));
+                        if(b.position.y == World.World.chunkSize - 1) 
+                            updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx,thisChunky+ World.World.chunkSize,thisChunkz)));
                         if(b.position.z == 0) 
-                            updates.Add(World.BuildChunkName(new Vector3(thisChunkx,thisChunky,thisChunkz-World.chunkSize)));
-                        if(b.position.z == World.chunkSize - 1) 
-                            updates.Add(World.BuildChunkName(new Vector3(thisChunkx,thisChunky,thisChunkz+World.chunkSize)));
+                            updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx,thisChunky,thisChunkz- World.World.chunkSize)));
+                        if(b.position.z == World.World.chunkSize - 1) 
+                            updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx,thisChunky,thisChunkz+ World.World.chunkSize)));
 
                         foreach(string cname in updates)
                         {
                             Chunk c;
-                            if(World.chunks.TryGetValue(cname, out c))
+                            if(World.World.chunks.TryGetValue(cname, out c))
                             {
                                 c.Redraw();
                             }
