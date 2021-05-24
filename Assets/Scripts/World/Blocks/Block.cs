@@ -193,6 +193,8 @@ namespace Assets.Scripts.World.Blocks
             if (bType == BlockType.WATER)
             {
                 parent = owner.fluid.gameObject;
+
+                blockUVs = WaterBlock.MyUVs;
             }
             else
             {
@@ -263,7 +265,7 @@ namespace Assets.Scripts.World.Blocks
                 isSolid = false;
                 health = CrackedBlockType.NOCRACK;
                 owner.Redraw();
-                owner.UpdateChunk();
+                owner.mb.StartCoroutine(owner.UpdateChunk());
                 return true;
             }
 
@@ -499,6 +501,11 @@ namespace Assets.Scripts.World.Blocks
                 default:
                     throw new ArgumentOutOfRangeException(nameof(bType), bType, null);
             }
+        }
+
+        public int GetBlockMaxHealth()
+        {
+            return blockHealthMax[(int) bType];
         }
 
         public bool HasSolidNeighbour(int x, int y, int z)

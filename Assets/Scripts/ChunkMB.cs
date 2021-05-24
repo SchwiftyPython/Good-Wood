@@ -55,7 +55,7 @@ public class ChunkMB: MonoBehaviour
 
 	public IEnumerator Flow(Block b, Block.BlockType bt, int strength, int maxsize)
 	{
-		//reduce the strenth of the fluid block
+		//reduce the strength of the fluid block
 		//with each new block created
 		if(maxsize <= 0) yield break;
 		if(b == null) yield break;
@@ -83,24 +83,67 @@ public class ChunkMB: MonoBehaviour
 			--maxsize;
 			//flow left
 			World.queue.Run(Flow(b.GetBlock(x-1,y,z),bt,strength,maxsize));
-			yield return new WaitForSeconds(1);
+			yield return new WaitForSeconds(.5f);
 
 			//flow right
 			World.queue.Run(Flow(b.GetBlock(x+1,y,z),bt,strength,maxsize));
-			yield return new WaitForSeconds(1);
+			yield return new WaitForSeconds(.5f);
 
 			//flow forward
 			World.queue.Run(Flow(b.GetBlock(x,y,z+1),bt,strength,maxsize));
-			yield return new WaitForSeconds(1);
+			yield return new WaitForSeconds(.5f);
 
 			//flow back
 			World.queue.Run(Flow(b.GetBlock(x,y,z-1),bt,strength,maxsize));
-			yield return new WaitForSeconds(1);
+			yield return new WaitForSeconds(.5f);
 		}
+    }
 
+    public IEnumerator Flow(Block b, int strength, int maxsize)
+    {
+        //reduce the strength of the fluid block
+        //with each new block created
+        if (maxsize <= 0) yield break;
+        if (b == null) yield break;
+        if (strength <= 0) yield break;
+        //if (b.bType != Block.BlockType.AIR) yield break;
+        //b.SetType(bt);
+        b.currentHealth = strength;
+        b.owner.Redraw();
+        yield return null;
 
-		
-	}
+        int x = (int)b.position.x;
+        int y = (int)b.position.y;
+        int z = (int)b.position.z;
+
+        //flow down if air block beneath
+        Block below = b.GetBlock(x, y - 1, z);
+        if (below != null && below.bType == Block.BlockType.AIR)
+        {
+            StartCoroutine(Flow(b.GetBlock(x, y - 1, z), b.bType, strength, --maxsize));
+            yield break;
+        }
+        else //flow outward
+        {
+            --strength;
+            --maxsize;
+            //flow left
+            World.queue.Run(Flow(b.GetBlock(x - 1, y, z), b.bType, strength, maxsize));
+            yield return null;
+
+            //flow right
+            World.queue.Run(Flow(b.GetBlock(x + 1, y, z), b.bType, strength, maxsize));
+            yield return null;
+
+            //flow forward
+            World.queue.Run(Flow(b.GetBlock(x, y, z + 1), b.bType, strength, maxsize));
+            yield return null;
+
+            //flow back
+            World.queue.Run(Flow(b.GetBlock(x, y, z - 1), b.bType, strength, maxsize));
+            yield return null;
+        }
+    }
 
 	void SaveProgress()
 	{

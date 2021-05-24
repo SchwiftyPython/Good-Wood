@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.World.Biomes;
 using Assets.Scripts.World.Blocks;
 using Realtime.Messaging.Internal;
+using UnityEditor.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,12 +17,14 @@ namespace Assets.Scripts.World
         public GameObject player;
         public Material textureAtlas;
         public Material fluidTexture;
-        public static int Seed = 3;
+        public string SeedString;
+
+        public static int Seed;
         public static int columnHeight = 16;
         public static int chunkSize = 16;
         public static int worldSize = 1;
         public static int radius = 3;
-        public static uint maxCoroutines = 9000;
+        public static uint maxCoroutines = 15000;
         public static ConcurrentDictionary<string, Chunk> chunks;
         public static List<string> toRemove = new List<string>();
 
@@ -232,6 +236,8 @@ namespace Assets.Scripts.World
 
         public void PlayButtonPressed()
         {
+            Seed = ConvertSeed(SeedString);
+
             BMap = new BiomeMap(Seed);
 
             //build starting chunk
@@ -245,6 +251,33 @@ namespace Assets.Scripts.World
             queue.Run(BuildRecursiveWorld((int)(player.transform.position.x/chunkSize),
                 (int)(player.transform.position.y/chunkSize),
                 (int)(player.transform.position.z/chunkSize),radius,radius));
+        }
+
+        private int ConvertSeed(string seedString)
+        {
+            var unicode = seedString.Select(t => $"U+{Convert.ToUInt16(t):X4} ").ToList();
+
+            var newSeed = 0;
+            var index = 0;
+            foreach (var uni in unicode)
+            {
+                if (index >= uni.Length)
+                {
+                    index = 0;
+                }
+
+                var number = Convert.ToInt32(char.GetNumericValue(uni, index));
+
+                number = (int) (Math.Pow(number, 2) + 1 % Int32.MaxValue);
+
+                newSeed += number;
+
+                index++;
+            }
+
+            Debug.Log($"String: {seedString} Int: {newSeed}");
+
+            return newSeed;
         }
 	
         // Update is called once per frame

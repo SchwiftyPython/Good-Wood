@@ -1,11 +1,10 @@
-﻿using Assets.Scripts.World.Blocks;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Assets.Scripts.Blocks
+namespace Assets.Scripts.World.Blocks
 {
     public class WaterBlock : Block
     {
-        private readonly Vector2[,] _myUVs =
+        public static readonly Vector2[,] MyUVs =
         {
             /*TOP*/
             {
@@ -26,7 +25,7 @@ namespace Assets.Scripts.Blocks
 
         public WaterBlock(Vector3 pos, GameObject p, Chunk o) : base(BlockType.WATER, pos, p, o)
         {
-            blockUVs = _myUVs;
+            blockUVs = MyUVs;
         }
     }
 }

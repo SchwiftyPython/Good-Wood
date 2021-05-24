@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class Utils {
 
-	static int maxHeight = 150;
+	public static int maxHeight = 150;
 	static float smooth = 0.01f;
 	static int octaves = 4;
-	static float persistence = 0.5f;
+	static float persistence = .5f;
 
 	public static int GenerateStoneHeight(float x, float z)
 	{

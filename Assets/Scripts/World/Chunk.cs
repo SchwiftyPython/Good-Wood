@@ -1,11 +1,15 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
 using Assets.Scripts;
 using Assets.Scripts.Blocks;
 using Assets.Scripts.World;
 using Assets.Scripts.World.Biomes;
 using Assets.Scripts.World.Blocks;
+using Assets.Scripts.World.Decorators;
 using UnityEngine;
 
 [Serializable]
@@ -42,7 +46,8 @@ public class Chunk
     public bool changed = false;
     bool treesCreated = false;
 
-    private BiomeProvider _biome;
+    public BiomeProvider Biome;
+    public IList<IChunkDecorator> ChunkDecorators { get; private set; }
 
     string BuildChunkFileName(Vector3 v)
     {
@@ -87,20 +92,30 @@ public class Chunk
         //Debug.Log("Saving chunk from file: " + chunkFile);
     }
 
-    public void UpdateChunk()
+    public IEnumerator UpdateChunk()
     {
         for (int z = 0; z < World.chunkSize; z++)
+        {
             for (int y = 0; y < World.chunkSize; y++)
+            {
                 for (int x = 0; x < World.chunkSize; x++)
                 {
                     if (chunkData[x, y, z].bType == Block.BlockType.SAND)
                     {
                         mb.StartCoroutine(mb.Drop(chunkData[x, y, z],
-                                        Block.BlockType.SAND,
-                                        20));
+                            Block.BlockType.SAND,
+                            20));
                     }
-                }
+                    else if (chunkData[x, y, z].bType == Block.BlockType.WATER)
+                    {
+                        mb.StartCoroutine(mb.Flow(chunkData[x, y, z],
+                            chunkData[x, y, z].GetBlockMaxHealth(), 15));
+                    }
 
+                    yield return null;
+                }
+            }
+        }
     }
 
     void BuildChunk()
@@ -111,6 +126,16 @@ public class Chunk
         var seed = World.Seed;
         var biomeRepo = World.BiomeRepo;
 
+        var cPosition = chunk.transform.position;
+        var id = World.BMap.GenerateBiome(seed, biomeRepo, cPosition, World.IsSpawnCoordinate((int)cPosition.x, (int)cPosition.y));
+        var biomeCell = new BiomeCell(id, cPosition);
+        World.BMap.AddCell(biomeCell);
+
+        var biomeId = GetBiome(cPosition);
+        var biome = biomeRepo.GetBiome(biomeId);
+
+        Biome = (BiomeProvider)biome;
+
         chunkData = new Block[World.chunkSize, World.chunkSize, World.chunkSize];
         for (int z = 0; z < World.chunkSize; z++)
         {
@@ -119,9 +144,9 @@ public class Chunk
                 for (int x = 0; x < World.chunkSize; x++)
                 {
                     Vector3 pos = new Vector3(x, y, z);
-                    int worldX = (int)(x + chunk.transform.position.x);
-                    int worldY = (int)(y + chunk.transform.position.y);
-                    int worldZ = (int)(z + chunk.transform.position.z);
+                    int worldX = (int)(x + cPosition.x);
+                    int worldY = (int)(y + cPosition.y);
+                    int worldZ = (int)(z + cPosition.z);
 
                     if (dataFromFile)
                     {
@@ -132,19 +157,9 @@ public class Chunk
 
                     var location = new Vector2(x, y);
 
-                    if (World.BMap.BiomeCells.Count < 1)
-                    {
-                        var id = World.BMap.GenerateBiome(seed, biomeRepo, location, World.IsSpawnCoordinate(x, y));
-                        var biomeCell = new BiomeCell(id, location);
-                        World.BMap.AddCell(biomeCell);
-                    }
+                    
 
-                    var biomeId = GetBiome(location);
-                    var biome = biomeRepo.GetBiome(biomeId);
-
-                    _biome = (BiomeProvider) biome;
-
-                    int surfaceHeight = Utils.GenerateHeight(seed + worldX, seed + worldZ);
+                    int surfaceHeight = Utils.GenerateHeight((seed % Utils.maxHeight) + worldX, (seed % Utils.maxHeight) + worldZ);
 
                     if (worldY == 0)
                     {
@@ -172,10 +187,11 @@ public class Chunk
                             chunkData[x, y, z] = new StoneBlock(pos, chunk.gameObject, this);
                         }
                     }
-                    else if (worldY < 65)
+                    /*else if (worldY < 65)
                     {
                         chunkData[x, y, z] = new WaterBlock(pos, fluid.gameObject, this);
-                    }                    
+                        mb.Flow(chunkData[x, y, z], chunkData[x, y, z].GetBlockMaxHealth(), 15);
+                    }     */               
                     else
                     {
                         chunkData[x, y, z] = new AirBlock(pos, chunk.gameObject, this);
@@ -189,6 +205,11 @@ public class Chunk
                     status = ChunkStatus.DRAW;
                 }
             }
+        }
+        
+        foreach (var decorator in ChunkDecorators)
+        {
+            decorator.Decorate(this, biomeRepo);
         }
     }
 
@@ -303,6 +324,9 @@ public class Chunk
         mb.SetOwner(this);
         cubeMaterial = c;
         fluidMaterial = t;
+
+        ChunkDecorators = new List<IChunkDecorator> {new LiquidDecorator()};
+
         BuildChunk();
     }
 
