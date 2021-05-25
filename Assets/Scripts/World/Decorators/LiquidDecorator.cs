@@ -9,7 +9,7 @@ namespace Assets.Scripts.World.Decorators
 {
     public class LiquidDecorator : IChunkDecorator
     {
-        private const int WaterLevel = 65;
+        private const int WaterLevel = 45;
 
         public void Decorate(Chunk chunk, IBiomeRepository biomeRepo)
         {

@@ -20,11 +20,11 @@ namespace Assets.Scripts.World
         public string SeedString;
 
         public static int Seed;
-        public static int columnHeight = 16;
+        public static int columnHeight = 128;
         public static int chunkSize = 16;
         public static int worldSize = 1;
         public static int radius = 3;
-        public static uint maxCoroutines = 15000;
+        public static uint maxCoroutines = 30000;
         public static ConcurrentDictionary<string, Chunk> chunks;
         public static List<string> toRemove = new List<string>();
 
@@ -85,7 +85,6 @@ namespace Assets.Scripts.World
             Chunk c;
             if(chunks.TryGetValue(cn, out c))
             {
-
                 return c.chunkData[blx,bly,blz];
             }
             else
@@ -200,7 +199,7 @@ namespace Assets.Scripts.World
 
         public static bool IsSpawnCoordinate(int x, int y)
         {
-            return x == 8 && y == 150;
+            return x == 0 && y == 64;
         }
 
         // Use this for initialization
@@ -237,6 +236,8 @@ namespace Assets.Scripts.World
         public void PlayButtonPressed()
         {
             Seed = ConvertSeed(SeedString);
+
+            Utils.InitializeNoise(Seed);
 
             BMap = new BiomeMap(Seed);
 

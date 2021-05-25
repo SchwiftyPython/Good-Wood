@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assets.Scripts.World.Biomes;
+using Assets.Scripts.World.Noise;
 using UnityEngine;
 
 namespace Assets.Scripts.World
@@ -13,12 +14,28 @@ namespace Assets.Scripts.World
         private const float TempFrequency = 0.015f;
         private const float RainFrequency = 0.03f;
 
+        Perlin TempNoise, RainNoise;
+
         public IList<BiomeCell> BiomeCells { get; }
 
         public BiomeMap(int seed)
         {
             _seed = seed;
             BiomeCells = new List<BiomeCell>();
+            TempNoise = new Perlin(seed);
+            RainNoise = new Perlin(seed);
+            BiomeCells = new List<BiomeCell>();
+            TempNoise.Persistance = 1.45;
+            TempNoise.Frequency = 0.015;
+            TempNoise.Amplitude = 5;
+            TempNoise.Octaves = 2;
+            TempNoise.Lacunarity = 1.3;
+            RainNoise.Frequency = 0.03;
+            RainNoise.Octaves = 3;
+            RainNoise.Amplitude = 5;
+            RainNoise.Lacunarity = 1.7;
+            TempNoise.Seed = seed;
+            RainNoise.Seed = seed;
         }
 
         public void AddCell(BiomeCell cell)
@@ -34,8 +51,8 @@ namespace Assets.Scripts.World
 
         public Guid GenerateBiome(int seed, IBiomeRepository biomes, Vector2 location, bool spawn)
         {
-            var temperature = Math.Abs(Mathf.PerlinNoise((location.x + seed + Offset) * TempFrequency, (location.y + seed + Offset) * TempFrequency));
-            var rain = Math.Abs(Mathf.PerlinNoise((seed + Offset) * RainFrequency, (seed + Offset) * RainFrequency));
+            var temperature = Math.Abs(TempNoise.Value2D(location.x, location.y));
+            var rain = Math.Abs(RainNoise.Value2D(location.x, location.y));
 
             var id = biomes.GetBiome(temperature, rain, spawn).Id;
             return id;

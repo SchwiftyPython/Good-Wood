@@ -484,7 +484,7 @@ MonoBehaviour:
   player: {fileID: 365632362}
   textureAtlas: {fileID: 2100000, guid: 0beff685461bd4744bc433ab1599a347, type: 2}
   fluidTexture: {fileID: 2100000, guid: 033d6ae81142c4d80828ae3712a04408, type: 2}
-  SeedString: pantuku
+  SeedString: Animal Crossing
   buildProgress: {fileID: 881920518}
   chunkCount: 0
   buildCam: {fileID: 1319910542}

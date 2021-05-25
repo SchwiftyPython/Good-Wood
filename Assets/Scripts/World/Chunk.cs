@@ -10,6 +10,7 @@ using Assets.Scripts.World;
 using Assets.Scripts.World.Biomes;
 using Assets.Scripts.World.Blocks;
 using Assets.Scripts.World.Decorators;
+using Assets.Scripts.World.Noise;
 using UnityEngine;
 
 [Serializable]
@@ -62,33 +63,33 @@ public class Chunk
 
     bool Load() //read data from file
     {
-        string chunkFile = BuildChunkFileName(chunk.transform.position);
-		if(File.Exists(chunkFile))
-		{
-			BinaryFormatter bf = new BinaryFormatter();
-			FileStream file = File.Open(chunkFile, FileMode.Open);
-			bd = new BlockData();
-			bd = (BlockData) bf.Deserialize(file);
-			file.Close();
-			//Debug.Log("Loading chunk from file: " + chunkFile);
-			return true;
-		}
+  //       string chunkFile = BuildChunkFileName(chunk.transform.position);
+		// if(File.Exists(chunkFile))
+		// {
+		// 	BinaryFormatter bf = new BinaryFormatter();
+		// 	FileStream file = File.Open(chunkFile, FileMode.Open);
+		// 	bd = new BlockData();
+		// 	bd = (BlockData) bf.Deserialize(file);
+		// 	file.Close();
+		// 	//Debug.Log("Loading chunk from file: " + chunkFile);
+		// 	return true;
+		// }
         return false;
     }
 
     public void Save() //write data to file
     {
-        string chunkFile = BuildChunkFileName(chunk.transform.position);
-		
-		if(!File.Exists(chunkFile))
-		{
-			Directory.CreateDirectory(Path.GetDirectoryName(chunkFile));
-		}
-		BinaryFormatter bf = new BinaryFormatter();
-		FileStream file = File.Open(chunkFile, FileMode.OpenOrCreate);
-		bd = new BlockData(chunkData);
-		bf.Serialize(file, bd);
-		file.Close();
+  //       string chunkFile = BuildChunkFileName(chunk.transform.position);
+		//
+		// if(!File.Exists(chunkFile))
+		// {
+		// 	Directory.CreateDirectory(Path.GetDirectoryName(chunkFile));
+		// }
+		// BinaryFormatter bf = new BinaryFormatter();
+		// FileStream file = File.Open(chunkFile, FileMode.OpenOrCreate);
+		// bd = new BlockData(chunkData);
+		// bf.Serialize(file, bd);
+		// file.Close();
         //Debug.Log("Saving chunk from file: " + chunkFile);
     }
 
@@ -124,6 +125,7 @@ public class Chunk
         dataFromFile = Load();
 
         var seed = World.Seed;
+        var worley = new CellNoise(seed);
         var biomeRepo = World.BiomeRepo;
 
         var cPosition = chunk.transform.position;
@@ -157,9 +159,25 @@ public class Chunk
 
                     var location = new Vector2(x, y);
 
-                    
+                    const double lowClampRange = 5;
+                    double lowClampMid = Utils.LowClamp.MaxValue - ((Utils.LowClamp.MaxValue + Utils.LowClamp.MinValue) / 2);
+                    double lowClampValue = Utils.LowClamp.Value2D(worldX, worldZ);
 
-                    int surfaceHeight = Utils.GenerateHeight((seed % Utils.maxHeight) + worldX, (seed % Utils.maxHeight) + worldZ);
+                    if (lowClampValue > lowClampMid - lowClampRange && lowClampValue < lowClampMid + lowClampRange)
+                    {
+                        InvertNoise NewPrimary = new InvertNoise(Utils.HighClamp);
+                        Utils.FinalNoise.PrimaryNoise = NewPrimary;
+                    }
+                    else
+                    {
+                        //reset it after modifying the values
+                        Utils.FinalNoise = new ModifyNoise(Utils.HighClamp, Utils.LowClamp, NoiseModifier.Add);
+                    }
+                    Utils.FinalNoise = new ModifyNoise(Utils.FinalNoise, Utils.BottomClamp, NoiseModifier.Subtract);
+
+                    //int surfaceHeight = Utils.GenerateHeight((seed % Utils.MaxHeight) + worldX, (seed % Utils.MaxHeight) + worldZ);
+                    
+                    int surfaceHeight = Utils.GetHeight(worldX, worldZ);
 
                     if (worldY == 0)
                     {
@@ -167,7 +185,7 @@ public class Chunk
                     }
                     else if (worldY == surfaceHeight)
                     {
-                        if (Utils.fBM3D(worldX, worldY, worldZ, 0.4f, 2) < 0.4f)
+                        if (Utils.FBm3D(worldX, worldY, worldZ, 0.4f, 2) < 0.4f)
                         {
                             chunkData[x, y, z] = new WoodbaseBlock(pos, chunk.gameObject, this);
                         }
@@ -197,7 +215,7 @@ public class Chunk
                         chunkData[x, y, z] = new AirBlock(pos, chunk.gameObject, this);
                     }
 
-                    if (chunkData[x, y, z].bType != Block.BlockType.WATER && Utils.fBM3D(worldX, worldY, worldZ, 0.1f, 3) < 0.42f)
+                    if (chunkData[x, y, z].bType != Block.BlockType.WATER && Utils.FBm3D(worldX, worldY, worldZ, 0.1f, 3) < 0.42f)
                     {
                         chunkData[x, y, z] = new AirBlock(pos, chunk.gameObject, this);
                     }
