@@ -1,7 +1,6 @@
-﻿using Assets.Scripts.World.Blocks;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Assets.Scripts.Blocks
+namespace Assets.Scripts.World.Blocks
 {
     public class DiamondBlock : Block
     {

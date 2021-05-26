@@ -94,5 +94,6 @@ public class CoroutineQueue
 			var next = queue.Dequeue();
 			Run(next);
 		}
+		//Debug.Log($"Num coroutines running: {numActive}");
 	}
 }

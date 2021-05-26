@@ -5,7 +5,6 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using Assets.Scripts;
-using Assets.Scripts.Blocks;
 using Assets.Scripts.World;
 using Assets.Scripts.World.Biomes;
 using Assets.Scripts.World.Blocks;
@@ -22,9 +21,9 @@ class BlockData
 
     public BlockData(Block[,,] b)
     {
-        matrix = new Block.BlockType[World.chunkSize, World.chunkSize, World.chunkSize];
+        matrix = new Block.BlockType[World.chunkSize, World.columnHeight, World.chunkSize];
         for (int z = 0; z < World.chunkSize; z++)
-            for (int y = 0; y < World.chunkSize; y++)
+            for (int y = 0; y < World.columnHeight; y++)
                 for (int x = 0; x < World.chunkSize; x++)
                 {
                     matrix[x, y, z] = b[x, y, z].bType;
@@ -97,19 +96,19 @@ public class Chunk
     {
         for (int z = 0; z < World.chunkSize; z++)
         {
-            for (int y = 0; y < World.chunkSize; y++)
+            for (int y = 0; y < World.columnHeight; y++)
             {
                 for (int x = 0; x < World.chunkSize; x++)
                 {
                     if (chunkData[x, y, z].bType == Block.BlockType.SAND)
                     {
-                        mb.StartCoroutine(mb.Drop(chunkData[x, y, z],
+                        World.queue.Run(mb.Drop(chunkData[x, y, z],
                             Block.BlockType.SAND,
                             20));
                     }
                     else if (chunkData[x, y, z].bType == Block.BlockType.WATER)
                     {
-                        mb.StartCoroutine(mb.Flow(chunkData[x, y, z],
+                        World.queue.Run(mb.Flow(chunkData[x, y, z],
                             chunkData[x, y, z].GetBlockMaxHealth(), 15));
                     }
 
@@ -138,10 +137,10 @@ public class Chunk
 
         Biome = (BiomeProvider)biome;
 
-        chunkData = new Block[World.chunkSize, World.chunkSize, World.chunkSize];
+        chunkData = new Block[World.chunkSize, World.columnHeight, World.chunkSize];
         for (int z = 0; z < World.chunkSize; z++)
         {
-            for (int y = 0; y < World.chunkSize; y++)
+            for (int y = 0; y < World.columnHeight; y++)
             {
                 for (int x = 0; x < World.chunkSize; x++)
                 {
@@ -185,14 +184,16 @@ public class Chunk
                     }
                     else if (worldY == surfaceHeight)
                     {
-                        if (Utils.FBm3D(worldX, worldY, worldZ, 0.4f, 2) < 0.4f)
-                        {
-                            chunkData[x, y, z] = new WoodbaseBlock(pos, chunk.gameObject, this);
-                        }
-                        else
-                        {
-                            chunkData[x, y, z] = Block.GetBlock(biome.SurfaceBlock, pos, chunk.gameObject, this);
-                        }
+                        chunkData[x, y, z] = Block.GetBlock(biome.SurfaceBlock, pos, chunk.gameObject, this);
+
+                        // if (Utils.FBm3D(worldX, worldY, worldZ, 0.4f, 2) < 0.4f)
+                        // {
+                        //     chunkData[x, y, z] = new WoodbaseBlock(pos, chunk.gameObject, this);
+                        // }
+                        // else
+                        // {
+                        //     chunkData[x, y, z] = Block.GetBlock(biome.SurfaceBlock, pos, chunk.gameObject, this);
+                        // }
                     }
                     else if (worldY < surfaceHeight)
                     {
@@ -245,18 +246,18 @@ public class Chunk
 
     public void DrawChunk()
     {
-        if (!treesCreated)
-        {
-            for (int z = 0; z < World.chunkSize; z++)
-                for (int y = 0; y < World.chunkSize; y++)
-                    for (int x = 0; x < World.chunkSize; x++)
-                    {
-                        BuildTrees(chunkData[x, y, z], x, y, z);
-                    }
-            treesCreated = true;
-        }
+        // if (!treesCreated)
+        // {
+        //     for (int z = 0; z < World.chunkSize; z++)
+        //         for (int y = 0; y < World.columnHeight; y++)
+        //             for (int x = 0; x < World.chunkSize; x++)
+        //             {
+        //                 BuildTrees(chunkData[x, y, z], x, y, z);
+        //             }
+        //     treesCreated = true;
+        // }
         for (int z = 0; z < World.chunkSize; z++)
-            for (int y = 0; y < World.chunkSize; y++)
+            for (int y = 0; y < World.columnHeight; y++)
                 for (int x = 0; x < World.chunkSize; x++)
                 {
                     chunkData[x, y, z].Draw();
@@ -329,10 +330,9 @@ public class Chunk
     }
 
     public Chunk() { }
-    // Use this for initialization
+
     public Chunk(Vector3 position, Material c, Material t)
     {
-
         chunk = new GameObject(World.BuildChunkName(position));
         chunk.transform.position = position;
         fluid = new GameObject(World.BuildChunkName(position) + "_F");
@@ -343,11 +343,10 @@ public class Chunk
         cubeMaterial = c;
         fluidMaterial = t;
 
-        ChunkDecorators = new List<IChunkDecorator> {new LiquidDecorator()};
+        ChunkDecorators = new List<IChunkDecorator> {new LiquidDecorator(), new TreeDecorator()};
 
         BuildChunk();
     }
-
 
     public void CombineQuads(GameObject o, Material m)
     {

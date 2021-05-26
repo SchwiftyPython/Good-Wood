@@ -1,12 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Assets.Scripts.Blocks;
-using Assets.Scripts.World.Blocks;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class AirBlock : Block
+namespace Assets.Scripts.World.Blocks
 {
-    public AirBlock(Vector3 pos, GameObject p, Chunk o) : base(BlockType.AIR, pos, p, o)
+    public class AirBlock : Block
     {
+        public AirBlock(Vector3 pos, GameObject p, Chunk o) : base(BlockType.AIR, pos, p, o)
+        {
+        }
     }
 }

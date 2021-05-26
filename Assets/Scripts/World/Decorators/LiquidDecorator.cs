@@ -1,7 +1,7 @@
 ﻿using System;
-using Assets.Scripts.Blocks;
 using Assets.Scripts.World.Biomes;
 using Assets.Scripts.World.Blocks;
+using Assets.Scripts.World.Noise;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -11,17 +11,26 @@ namespace Assets.Scripts.World.Decorators
     {
         private const int WaterLevel = 45;
 
+        public Perlin Noise { get; set; }
+
         public void Decorate(Chunk chunk, IBiomeRepository biomeRepo)
         {
+            Noise = new Perlin(World.Seed);
+
             for (int z = 0; z < World.chunkSize; z++)
             {
-                for (int y = 0; y < World.chunkSize; y++)
+                for (int y = 0; y < World.columnHeight; y++)
                 {
                     for (int x = 0; x < World.chunkSize; x++)
                     {
+                        // if (Noise.Value2D(x, z) <= 0.3) //todo need some way to stop water from being in all underground caves or get liquids to settle without freezing game
+                        // {
+                        //     continue;
+                        // }
+
                         var biome = chunk.Biome;
 
-                        int worldY = (int)(y + chunk.chunk.transform.position.y);
+                        var worldY = (int)(y + chunk.chunk.transform.position.y);
 
                         for (int i = worldY; i < WaterLevel; i++)
                         {
@@ -47,6 +56,8 @@ namespace Assets.Scripts.World.Decorators
                             if (block.bType == Block.BlockType.AIR)
                             {
                                 block.SetType(biome.WaterBlock);
+
+                                //chunk.mb.StartCoroutine(chunk.mb.Flow(block, block.blockHealthMax[(int) Block.BlockType.WATER], 15));
 
                                 if (i - chunk.chunk.transform.position.y < 1)
                                 {

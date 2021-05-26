@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Assets.Scripts.Blocks;
 using Assets.Scripts.World.Biomes;
 using Assets.Scripts.World.Blocks;
 using Realtime.Messaging.Internal;
@@ -20,11 +19,11 @@ namespace Assets.Scripts.World
         public string SeedString;
 
         public static int Seed;
-        public static int columnHeight = 128;
+        public static int columnHeight = 32;
         public static int chunkSize = 16;
         public static int worldSize = 1;
         public static int radius = 3;
-        public static uint maxCoroutines = 30000;
+        public static uint maxCoroutines = 90000;
         public static ConcurrentDictionary<string, Chunk> chunks;
         public static List<string> toRemove = new List<string>();
 
@@ -32,7 +31,7 @@ namespace Assets.Scripts.World
         public static bool firstbuild = true;
         public Slider buildProgress;
         public int chunkCount = 0;
-        int totalChunkCount = 63; //work this out by running and looking at final chunk count.
+        int totalChunkCount = 62; //work this out by running and looking at final chunk count.
         public Camera buildCam;
         public Button playButton;
 
@@ -67,9 +66,9 @@ namespace Assets.Scripts.World
                 cx = (int) (Mathf.Round(pos.x)/(float)chunkSize) * chunkSize;
 		
             if(pos.y < 0)
-                cy = (int) (Mathf.Round(pos.y-chunkSize)/(float)chunkSize) * chunkSize;
+                cy = (int) (Mathf.Round(pos.y-columnHeight)/(float)columnHeight) * columnHeight;
             else
-                cy = (int) (Mathf.Round(pos.y)/(float)chunkSize) * chunkSize;
+                cy = (int) (Mathf.Round(pos.y)/(float)columnHeight) * columnHeight;
 		
 
             if(pos.z < 0)
@@ -94,7 +93,7 @@ namespace Assets.Scripts.World
         void BuildChunkAt(int x, int y, int z)
         {
             Vector3 chunkPosition = new Vector3(x*chunkSize, 
-                y*chunkSize, 
+                y* columnHeight, 
                 z*chunkSize);
 					
             string n = BuildChunkName(chunkPosition);
@@ -193,7 +192,7 @@ namespace Assets.Scripts.World
         {
             StopCoroutine("BuildRecursiveWorld");
             queue.Run(BuildRecursiveWorld((int)(player.transform.position.x/chunkSize),
-                (int)(player.transform.position.y/chunkSize),
+                (int)(player.transform.position.y/ columnHeight),
                 (int)(player.transform.position.z/chunkSize),radius,radius));
         }
 
@@ -203,10 +202,15 @@ namespace Assets.Scripts.World
         }
 
         // Use this for initialization
-        void Start () {
+        void Start () 
+        {
+            Seed = ConvertSeed(SeedString);
+
+            Utils.InitializeNoise(Seed);
+
             Vector3 ppos = player.transform.position;
             player.transform.position = new Vector3(ppos.x,
-                Utils.GenerateHeight(ppos.x,ppos.z) + 1,
+                Utils.GetHeight((int) ppos.x,(int) ppos.z) + 1,
                 ppos.z);
             lastbuildPos = player.transform.position;
             player.SetActive(false);
@@ -235,22 +239,22 @@ namespace Assets.Scripts.World
 
         public void PlayButtonPressed()
         {
-            Seed = ConvertSeed(SeedString);
-
-            Utils.InitializeNoise(Seed);
+            // Seed = ConvertSeed(SeedString);
+            //
+            // Utils.InitializeNoise(Seed);
 
             BMap = new BiomeMap(Seed);
 
             //build starting chunk
             BuildChunkAt((int)(player.transform.position.x/chunkSize),
-                (int)(player.transform.position.y/chunkSize),
+                (int)(player.transform.position.y/ columnHeight),
                 (int)(player.transform.position.z/chunkSize));
             //draw it
             queue.Run(DrawChunks());
 
             //create a bigger world
             queue.Run(BuildRecursiveWorld((int)(player.transform.position.x/chunkSize),
-                (int)(player.transform.position.y/chunkSize),
+                (int)(player.transform.position.y/ columnHeight),
                 (int)(player.transform.position.z/chunkSize),radius,radius));
         }
 
@@ -293,16 +297,15 @@ namespace Assets.Scripts.World
                 BuildNearPlayer();
             }
 
-            if(!player.activeSelf)
+            if (!player.activeSelf)
             {
-                player.SetActive(true);	
+                player.SetActive(true);
                 Debug.Log("Built in " + (Time.time - startTime));
                 firstbuild = false;
             }
 
             queue.Run(DrawChunks());
             queue.Run(RemoveOldChunks());
-
         }
     }
 }

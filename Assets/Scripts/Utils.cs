@@ -76,8 +76,8 @@ namespace Assets.Scripts
                 value += (1 - distance / 1000f) * 18;
             if (value < 0)
                 value = GroundLevel;
-            if (value > World.World.columnHeight)
-                value = World.World.columnHeight - 1;
+            if (value > MaxHeight)
+                value = MaxHeight - 1;
             return (int)value;
         }
 
@@ -123,6 +123,16 @@ namespace Assets.Scripts
             }
 
             return total/maxValue;
+        }
+
+        public static int ChunkToBlockX(int blockCoord, int chunkX)
+        {
+            return chunkX * World.World.chunkSize + blockCoord;
+        }
+
+        public static int ChunkToBlockZ(int blockCoord, int chunkZ)
+        {
+            return chunkZ * World.World.chunkSize + blockCoord;
         }
     }
 }

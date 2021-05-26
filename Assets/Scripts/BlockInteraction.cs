@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Assets.Scripts.Blocks;
 using Assets.Scripts.World.Blocks;
 using UnityEngine;
 
@@ -86,9 +85,9 @@ namespace Assets.Scripts
                         if(b.position.x == World.World.chunkSize - 1) 
                             updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx+ World.World.chunkSize,thisChunky,thisChunkz)));
                         if(b.position.y == 0) 
-                            updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx,thisChunky- World.World.chunkSize,thisChunkz)));
-                        if(b.position.y == World.World.chunkSize - 1) 
-                            updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx,thisChunky+ World.World.chunkSize,thisChunkz)));
+                            updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx,thisChunky- World.World.columnHeight,thisChunkz)));
+                        if(b.position.y == World.World.columnHeight - 1) 
+                            updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx,thisChunky+ World.World.columnHeight,thisChunkz)));
                         if(b.position.z == 0) 
                             updates.Add(World.World.BuildChunkName(new Vector3(thisChunkx,thisChunky,thisChunkz- World.World.chunkSize)));
                         if(b.position.z == World.World.chunkSize - 1) 

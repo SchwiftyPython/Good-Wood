@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Assets.Scripts.Blocks;
 using UnityEngine;
 
 namespace Assets.Scripts.World.Blocks
@@ -12,7 +11,7 @@ namespace Assets.Scripts.World.Blocks
         public enum BlockType
         {
             GRASS, DIRT, WATER, STONE, LEAVES, WOOD, WOODBASE, SAND, GOLD, BEDROCK, REDSTONE, DIAMOND, NOCRACK,
-            CRACK1, CRACK2, CRACK3, CRACK4, AIR
+            CRACK1, CRACK2, CRACK3, CRACK4, AIR, CACTUS
         };
         //todo make a stationary water blocktype that doesn't get a uv scroller attached
 
@@ -33,7 +32,7 @@ namespace Assets.Scripts.World.Blocks
 
         public CrackedBlockType health;
         public int currentHealth;
-        int[] blockHealthMax = { 3, 3, 10, 4, 2, 4, 4, 2, 3, -1, 4, 4, 0, 0, 0, 0, 0, 0 };
+        public int[] blockHealthMax = { 3, 3, 10, 4, 2, 4, 4, 2, 3, -1, 4, 4, 0, 0, 0, 0, 0, 0 };
 
         private Dictionary<BlockType, int> _backupUvIndexes = new Dictionary<BlockType, int>
         {
@@ -226,13 +225,13 @@ namespace Assets.Scripts.World.Blocks
         {
             if (b == BlockType.WATER)
             {
-                owner.mb.StartCoroutine(owner.mb.Flow(this,
+                World.queue.Run(owner.mb.Flow(this,
                     BlockType.WATER,
                     blockHealthMax[(int)BlockType.WATER], 15));
             }
             else if (b == BlockType.SAND)
             {
-                owner.mb.StartCoroutine(owner.mb.Drop(this,
+                World.queue.Run(owner.mb.Drop(this,
                     BlockType.SAND,
                     20));
             }
@@ -256,7 +255,7 @@ namespace Assets.Scripts.World.Blocks
 
             if (currentHealth == (blockHealthMax[(int)bType] - 1))
             {
-                owner.mb.StartCoroutine(owner.mb.HealBlock(position));
+                World.queue.Run(owner.mb.HealBlock(position));
             }
 
             if (currentHealth <= 0)
@@ -265,7 +264,7 @@ namespace Assets.Scripts.World.Blocks
                 isSolid = false;
                 health = CrackedBlockType.NOCRACK;
                 owner.Redraw();
-                owner.mb.StartCoroutine(owner.UpdateChunk());
+                World.queue.Run(owner.UpdateChunk());
                 return true;
             }
 
@@ -401,13 +400,32 @@ namespace Assets.Scripts.World.Blocks
             suvs.Add(CrackBlock.MyUVs[(int)health, 1]);
         }
 
-        int ConvertBlockIndexToLocal(int i)
+        int ConvertBlockXZIndexToLocal(int i)
         {
             if (i <= -1)
-                i = Scripts.World.World.chunkSize + i;
-            else if (i >= Scripts.World.World.chunkSize)
-                i = i - Scripts.World.World.chunkSize;
+            {
+                i = World.chunkSize + i;
+            }
+            else if (i >= World.chunkSize)
+            {
+                i -= World.chunkSize;
+            }
+
             return i;
+        }
+
+        int ConvertBlockYIndexToLocal(int y)
+        {
+            if (y <= -1)
+            {
+                y = World.columnHeight + y;
+            }
+            else if (y >= World.columnHeight)
+            {
+                y -= World.columnHeight;
+            }
+
+            return y;
         }
 
         public BlockType GetBlockType(int x, int y, int z)
@@ -424,15 +442,15 @@ namespace Assets.Scripts.World.Blocks
             Block[,,] chunks;
 
             if (x < 0 || x >= Scripts.World.World.chunkSize ||
-                y < 0 || y >= Scripts.World.World.chunkSize ||
+                y < 0 || y >= Scripts.World.World.columnHeight ||
                 z < 0 || z >= Scripts.World.World.chunkSize)
             {  //block in a neighbouring chunk
 
                 int newX = x, newY = y, newZ = z;
                 if (x < 0 || x >= Scripts.World.World.chunkSize)
                     newX = (x - (int)position.x) * Scripts.World.World.chunkSize;
-                if (y < 0 || y >= Scripts.World.World.chunkSize)
-                    newY = (y - (int)position.y) * Scripts.World.World.chunkSize;
+                if (y < 0 || y >= Scripts.World.World.columnHeight)
+                    newY = (y - (int)position.y) * Scripts.World.World.columnHeight;
                 if (z < 0 || z >= Scripts.World.World.chunkSize)
                     newZ = (z - (int)position.z) * Scripts.World.World.chunkSize;
 
@@ -440,9 +458,9 @@ namespace Assets.Scripts.World.Blocks
                                             new Vector3(newX, newY, newZ);
                 string nName = Scripts.World.World.BuildChunkName(neighbourChunkPos);
 
-                x = ConvertBlockIndexToLocal(x);
-                y = ConvertBlockIndexToLocal(y);
-                z = ConvertBlockIndexToLocal(z);
+                x = ConvertBlockXZIndexToLocal(x);
+                y = ConvertBlockYIndexToLocal(y);
+                z = ConvertBlockXZIndexToLocal(z);
 
                 Chunk nChunk;
                 if (Scripts.World.World.chunks.TryGetValue(nName, out nChunk))
